@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>English Helper — الصف السادس (ستايل وردي + مكافآت)</title>
+<meta name="description" content="روبوت متحرك يشرح الدرس الأول (تحيات وتعارف) مع بطاقات ناطقة، اختبار سريع، ونظام نقاط ومكافآت بلون وردي أنيق.">
+<!-- CSP مبسطة لملف واحد -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'">
+<style>
+  :root{
+    /* لوحة وردية */
+    --primary:#d81b60;       /* فوشيا داكن */
+    --secondary:#f48fb1;     /* وردي فاتح */
+    --accent:#ec407a;        /* بينك متوسط */
+    --bg:#fff5f8;            /* خلفية وردية ناعمة */
+    --card:#ffffff;
+    --muted:#6b5560;         /* نص خافت مائل للوردي */
+    --border:#ffd6e3;        /* حدود وردية فاتحة */
+    --shadow:0 10px 22px rgba(216,27,96,.12);
+    --radius:18px;
+    --ok:#2e7d32; --warn:#f59e0b; --danger:#d32f2f;
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#1f0f16;font-family:'Tajawal',system-ui,Arial,sans-serif}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,var(--primary),var(--accent));color:#fff;padding:14px 16px;box-shadow:var(--shadow)}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .brand{display:flex;gap:10px;align-items:center}
+  .logo{width:44px;height:44px;border-radius:50%;background:#fff;color:var(--primary);display:grid;place-items:center;font-weight:900}
+  nav a{color:#fff;text-decoration:none;padding:8px 12px;border-radius:10px;font-weight:700;opacity:.95}
+  nav a:hover{background:rgba(255,255,255,.2)}
+  main{max-width:1100px;margin:18px auto;padding:0 14px;display:grid;gap:18px}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;border:1px solid var(--border)}
+  .card h3{margin:0 0 10px;font-size:1.1rem}
+  .muted{color:var(--muted)}
+  .btn{border:none;background:#ffe4ee;padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:800;box-shadow:var(--shadow)}
+  .btn.primary{background:linear-gradient(180deg,#d81b60,#ec407a);color:#fff}
+  .btn.ghost{background:#fff}
+  .btn.warn{background:linear-gradient(180deg,#f59e0b,#ffd166)}
+  .btn.danger{background:linear-gradient(180deg,#d32f2f,#ef5350);color:#fff}
+  .pill{background:#ffe6ef;color:#7a143b;padding:4px 10px;border-radius:999px;font-size:.85rem;border:1px solid var(--border)}
+
+  /* 🤖 روبوت */
+  .coach-wrap{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .coach{position:relative;width:220px;display:grid;place-items:center}
+  .coach svg{width:200px;height:200px;filter:drop-shadow(0 6px 16px rgba(216,27,96,.18))}
+  .bubble{position:relative;flex:1;min-width:260px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
+  .bubble:before{content:"";position:absolute;inset-inline-start:210px;inset-block-start:62px;border:8px solid transparent;border-inline-end-color:#fff;filter:drop-shadow(1px 1px 1px rgba(216,27,96,.06))}
+  .coach-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .coach-settings{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .coach-settings label{font-size:.9rem;color:#7a143b}
+  select,input[type="range"],input[type="text"]{width:100%;border:1px solid var(--border);border-radius:10px;padding:8px;background:#fff}
+
+  /* أنيميشن */
+  .eye{animation:blink 4.6s infinite;transform-origin:center}
+  @keyframes blink{0%,97%,100%{transform:scaleY(1)}98%{transform:scaleY(.1)}}
+  .float{animation:floatY 3.2s ease-in-out infinite}
+  @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  #arm{transform-box:fill-box;transform-origin:80% 20%}
+  .wave{animation:wave 900ms ease-in-out 1}
+  @keyframes wave{0%{transform:rotate(0)}50%{transform:rotate(-22deg)}100%{transform:rotate(0)}}
+
+  /* بطاقات */
+  .tabs{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+  .tabs .btn.active{outline:2px solid #ffc0d4}
+  .search{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .card-mini{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:12px;display:grid;gap:8px;align-content:start}
+  .en{font-size:1.06rem;color:#7a143b}
+  .ar{font-size:.96rem;color:#4e2a3b}
+  .row-center{display:flex;gap:8px;justify-content:center}
+  .alert{display:none;border-radius:12px;padding:10px;font-size:.92rem}
+  .alert.show{display:block}
+  .alert.error{background:#fdecea;color:#b71c1c;border:1px solid #ffcdd2}
+
+  /* اختبار سريع */
+  .quiz{display:grid;gap:8px;margin-top:8px}
+  .input{border:1px solid var(--border);border-radius:10px;padding:8px;background:#fff}
+
+  /* نقاط ومكافآت */
+  .points-wrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .score{font-size:2rem;font-weight:900;color:#7a143b}
+  .rewards{display:flex;gap:8px;flex-wrap:wrap}
+  .reward{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 10px;display:flex;gap:8px;align-items:center;box-shadow:var(--shadow)}
+  .reward small{color:#6b5560}
+  .history{font-size:.92rem;color:#6b5560;margin-top:6px}
+
+  /* مؤثرات المكافآت */
+  .burst{position:fixed; pointer-events:none; z-index:9999; inset:0; overflow:visible}
+  .burst i{position:absolute; font-size:22px; animation: rise 900ms ease-out forwards}
+  @keyframes rise{
+    0%{transform:translate(0,0) scale(.8); opacity:1}
+    100%{transform:translate(var(--tx), var(--ty)) scale(1.2); opacity:0}
+  }
+
+  .footer{text-align:center;color:#b27e91;padding:18px}
+  @media (max-width:560px){ .bubble:before{display:none} }
+</style>
+</head>
+<body>
+<header>
+  <div class="row" style="justify-content:space-between">
+    <div class="brand">
+      <div class="logo">A</div>
+      <div>
+        <div style="font-weight:900">English Helper — Grade 6 (Unit 1) — Pink 💗</div>
+        <div class="muted" id="todayLine">…</div>
+      </div>
+    </div>
+    <nav class="row">
+      <a href="#coachSec">الروبوت</a>
+      <a href="#cardsSec">بطاقات العبارات</a>
+      <a href="#quizSec">اختبار سريع</a>
+      <a href="#pointsSec">المكافآت</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- 🤖 الروبوت -->
+  <section id="coachSec" class="card">
+    <h3>الروبوت المساعد للدرس الأول (تحيات وتعارف) — ستايل وردي</h3>
+    <div class="coach-wrap">
+      <div class="coach">
+        <svg viewBox="0 0 200 200" aria-hidden="true" class="float">
+          <defs>
+            <!-- تدرّج وردي -->
+            <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stop-color="#f48fb1"/><stop offset="1" stop-color="#d81b60"/>
+            </linearGradient>
+          </defs>
+        <circle cx="100" cy="100" r="85" fill="url(#g)"/>
+        <rect x="60" y="70" rx="14" ry="14" width="80" height="60" fill="#fff" opacity="0.96"/>
+        <!-- عينان -->
+        <circle class="eye" cx="85" cy="100" r="8" fill="#7a143b"/>
+        <circle class="eye" cx="115" cy="100" r="8" fill="#7a143b"/>
+        <!-- فم -->
+        <path d="M80 120 Q100 132 120 120" stroke="#7a143b" stroke-width="4" fill="none"/>
+        <!-- هوائي -->
+        <rect x="98" y="38" width="4" height="18" rx="2" fill="#b61c57"/>
+        <circle cx="100" cy="34" r="5" fill="#ffc0d4" />
+        <!-- ذراع يمنى (تلوح) -->
+        <g id="arm">
+          <path d="M140 90 q20 -10 25 10 q-10 18 -25 12" fill="#ffe6ef" stroke="#7a143b" stroke-width="4" />
+          <circle cx="165" cy="100" r="6" fill="#7a143b"/>
+        </g>
+        </svg>
+      </div>
+      <div class="bubble">
+        <div id="coachMsg">Hi Aisha! I’m your pink study buddy 💗 لنبدأ بالتحيات.</div>
+        <div class="coach-actions">
+          <button id="sayHi" class="btn primary">🔊 جملة جاهزة</button>
+          <button id="waveBtn" class="btn ghost" title="لوّح">لوّح 👋</button>
+          <button id="muteBtn" class="btn" aria-pressed="false">كتم الصوت</button>
+          <span class="pill" id="speakState">جاهز 🟢</span>
+        </div>
+        <div class="coach-settings">
+          <label>الصوت:
+            <select id="voiceSel"></select>
+          </label>
+          <label>اللغة:
+            <select id="langSel">
+              <option value="en-US" selected>en-US (English)</option>
+              <option value="en-GB">en-GB</option>
+              <option value="ar-SA">ar-SA (Arabic)</option>
+            </select>
+          </label>
+          <label>السرعة: <input id="rateInp" type="range" min="0.6" max="1.4" step="0.1" value="1"></label>
+          <label>الطبقة: <input id="pitchInp" type="range" min="0.6" max="1.4" step="0.1" value="1"></label>
+        </div>
+        <div class="coach-actions">
+          <input id="freeText" placeholder="اكتبي جملة وأنا أنطقها" style="flex:1;min-width:240px">
+          <button id="sayBtn" class="btn primary">نُطق الآن</button>
+          <button id="stopBtn" class="btn danger">إيقاف</button>
+        </div>
+        <div id="ttsErr" class="alert error" role="alert">متصفحك لا يدعم Web Speech API.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 🧩 بطاقات العبارات -->
+  <section id="cardsSec" class="card">
+    <h3>بطاقات الدرس الأول: تحيات وتعارف وعبارات صفية</h3>
+    <div class="tabs">
+      <button id="tabGreet" class="btn active">Greetings</button>
+      <button id="tabIntro" class="btn">Introductions</button>
+      <button id="tabClass" class="btn">Classroom</button>
+      <select id="speakMode" class="btn">
+        <option value="en" selected>English فقط</option>
+        <option value="both">English + ترجمة</option>
+      </select>
+      <button id="autoSpeak" class="btn ghost" aria-pressed="false">نطق تلقائي: متوقف</button>
+    </div>
+    <div class="search">
+      <input id="searchInp" placeholder="ابحثي بالإنجليزي أو العربي (Hello / مرحبًا)">
+      <button id="clearSearch" class="btn ghost">مسح</button>
+    </div>
+    <div id="cardsGrid" class="grid" aria-live="polite"></div>
+  </section>
+
+  <!-- 📝 اختبار سريع -->
+  <section id="quizSec" class="card">
+    <h3>اختبار سريع — الدرس الأول</h3>
+    <div class="quiz">
+      <div class="muted">س: كيف تقولين «مرحبًا، اسمي عائشة» بالإنجليزية؟</div>
+      <input id="quizAns" class="input" placeholder="اكتبي إجابتك هنا" autocomplete="off">
+      <div class="row">
+        <button id="quizCheck" class="btn primary">تحقق</button>
+        <button id="quizSpeak" class="btn ghost">🔊 اسمعي الإجابة النموذجية</button>
+      </div>
+      <div id="quizMsg" class="pill" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- 🎁 نقاط ومكافآت -->
+  <section id="pointsSec" class="card">
+    <h3>المكافآت والنجوم</h3>
+    <div class="points-wrap">
+      <div>
+        <div class="muted">رصيدك الحالي</div>
+        <div id="score" class="score">0</div>
+      </div>
+      <div class="row">
+        <button id="bonusListen" class="btn">+1 استماع</button>
+        <button id="bonusTry" class="btn">+1 محاولة</button>
+        <button id="resetScore" class="btn danger">تصفير</button>
+      </div>
+    </div>
+    <div class="rewards" style="margin-top:10px">
+      <div class="reward">
+        <span>⭐</span>
+        <div><b>نجمة صغيرة</b><br><small>تكلفة: 5 نقاط</small></div>
+        <button class="btn primary" data-reward="star|5" style="margin-inline-start:auto">استبدال</button>
+      </div>
+      <div class="reward">
+        <span>💗</span>
+        <div><b>قلب وردي</b><br><small>تكلفة: 10 نقاط</small></div>
+        <button class="btn primary" data-reward="heart|10" style="margin-inline-start:auto">استبدال</button>
+      </div>
+      <div class="reward">
+        <span>👑</span>
+        <div><b>تاج المتفوقة</b><br><small>تكلفة: 20 نقطة</small></div>
+        <button class="btn primary" data-reward="crown|20" style="margin-inline-start:auto">استبدال</button>
+      </div>
+    </div>
+    <div id="history" class="history">سجل المكافآت: —</div>
+  </section>
+
+  <div class="footer">© English Helper — Grade 6 — Unit 1 — Pink Theme 💗</div>
+</main>
+
+<!-- حاوية مؤثر النجوم/القلوب -->
+<div class="burst" id="burst" aria-hidden="true"></div>
+
+<script>
+/* ========= أمان ومرافق ========= */
+const escapeHTML=(s='')=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=(q)=>document.querySelector(q);
+const LS={
+  voice:'eh_voice',rate:'eh_rate',pitch:'eh_pitch',lang:'eh_lang',
+  tab:'eh_tab',autos:'eh_autos',mode:'eh_mode',
+  points:'eh_points', history:'eh_history'
+};
+
+(function(){
+  try{
+    const t=new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{dateStyle:'full'}).format(new Date());
+    $('#todayLine').textContent=t;
+  }catch{ $('#todayLine').textContent='Welcome, Aisha!'; }
+})();
+
+/* ========= بيانات الدرس ========= */
+const DATA={
+  greetings:[
+    {en:'Hello!', ar:'مرحبًا!'},
+    {en:'Hi! How are you?', ar:'مرحبًا! كيف حالك؟'},
+    {en:'Good morning.', ar:'صباح الخير.'},
+    {en:'Good afternoon.', ar:'مساء الخير (بعد الظهر).'},
+    {en:'Good evening.', ar:'مساء الخير.'},
+    {en:'I’m fine, thank you.', ar:'أنا بخير، شكرًا.'},
+    {en:'Nice to meet you.', ar:'سعيد بلقائك.'},
+  ],
+  introductions:[
+    {en:'My name is Aisha.', ar:'اسمي عائشة.'},
+    {en:'What is your name?', ar:'ما اسمك؟'},
+    {en:'I am from Saudi Arabia.', ar:'أنا من السعودية.'},
+    {en:'I am in grade six.', ar:'أنا في الصف السادس.'},
+    {en:'How old are you?', ar:'كم عمرك؟'},
+    {en:'I am twelve years old.', ar:'عمري اثنا عشر سنة.'},
+  ],
+  classroom:[
+    {en:'May I answer the question?', ar:'هل يمكنني الإجابة على السؤال؟'},
+    {en:'Can you repeat, please?', ar:'لو سمحتِ، هل يمكنكِ الإعادة؟'},
+    {en:'I don’t understand.', ar:'أنا لا أفهم.'},
+    {en:'Please, speak slowly.', ar:'من فضلكِ، تحدّثي ببطء.'},
+    {en:'Excuse me, teacher.', ar:'عذرًا يا معلمة.'},
+    {en:'Thank you!', ar:'شكرًا لكِ!'}
+  ]
+};
+
+/* ========= Web Speech API ========= */
+const synth = window.speechSynthesis;
+const ttsErr = $('#ttsErr');
+let voices=[];
+let muted=false;
+
+const state={
+  voiceURI: localStorage.getItem(LS.voice)||'',
+  rate: parseFloat(localStorage.getItem(LS.rate)||'1')||1,
+  pitch: parseFloat(localStorage.getItem(LS.pitch)||'1')||1,
+  lang: localStorage.getItem(LS.lang)||'en-US',
+  tab: localStorage.getItem(LS.tab)||'greetings',
+  autoSpeak: localStorage.getItem(LS.autos)==='1',
+  mode: localStorage.getItem(LS.mode)||'en',
+  points: Number(localStorage.getItem(LS.points)||'0') || 0,
+  history: localStorage.getItem(LS.history)||''
+};
+
+function savePrefs(){
+  localStorage.setItem(LS.voice,state.voiceURI);
+  localStorage.setItem(LS.rate,String(state.rate));
+  localStorage.setItem(LS.pitch,String(state.pitch));
+  localStorage.setItem(LS.lang,state.lang);
+  localStorage.setItem(LS.tab,state.tab);
+  localStorage.setItem(LS.autos,state.autoSpeak?'1':'0');
+  localStorage.setItem(LS.mode,state.mode);
+  localStorage.setItem(LS.points,String(state.points));
+  localStorage.setItem(LS.history,state.history);
+}
+
+function loadVoices(){
+  voices = synth.getVoices();
+  const sel=$('#voiceSel'); sel.innerHTML='';
+  const pref = voices.filter(v=> v.lang?.toLowerCase().startsWith(state.lang.split('-')[0]));
+  const list = pref.length? pref : voices;
+  list.forEach(v=>{
+    const o=document.createElement('option');
+    o.value=v.voiceURI; o.textContent=`${v.name} — ${v.lang}`;
+    sel.appendChild(o);
+  });
+  const found = list.find(v=> v.voiceURI===state.voiceURI) || pref[0] || list[0];
+  if(found){ sel.value=found.voiceURI; state.voiceURI=found.voiceURI; }
+  $('#speakState').textContent = (pref.length? 'جاهز بصوت مناسب 🟢' : 'جاهز (قد يختلف الصوت) 🟡');
+}
+if(!('speechSynthesis' in window)){ if(ttsErr) ttsErr.classList.add('show'); }
+else { loadVoices(); window.speechSynthesis.onvoiceschanged=loadVoices; }
+
+function say(text){
+  if(!synth||!text) return;
+  if(muted){ $('#speakState').textContent='صامت 🔕'; return; }
+  try{ synth.cancel(); }catch(_){}
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=state.lang;
+  const v = voices.find(v=> v.voiceURI===state.voiceURI) || voices.find(v=> v.lang?.toLowerCase().startsWith(state.lang.toLowerCase())) || voices[0];
+  if(v) u.voice=v;
+  u.rate=state.rate; u.pitch=state.pitch;
+  u.onstart=()=>{ $('#speakState').textContent='يتحدث 🔊'; wave(); };
+  u.onend=()=>{ $('#speakState').textContent='جاهز 🟢'; };
+  u.onerror=()=>{ $('#speakState').textContent='خطأ في النطق ❌'; };
+  synth.speak(u);
+}
+
+/* ========= مؤثرات مكافآت ========= */
+function burst(x,y,icons=['⭐','💗','✨']){
+  const root = $('#burst');
+  for(let i=0;i<12;i++){
+    const el = document.createElement('i');
+    el.textContent = icons[Math.floor(Math.random()*icons.length)];
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+    const angle = (Math.random()*Math.PI*2);
+    const dist  = 80 + Math.random()*70;
+    el.style.setProperty('--tx', Math.cos(angle)*dist + 'px');
+    el.style.setProperty('--ty', (Math.sin(angle)*dist - 120) + 'px');
+    root.appendChild(el);
+    setTimeout(()=> el.remove(), 950);
+  }
+}
+
+/* ========= نقاط ومكافآت ========= */
+function renderScore(){
+  $('#score').textContent = state.points;
+}
+function addPoints(n, originEl){
+  const before = state.points;
+  state.points = Math.max(0, state.points + n);
+  renderScore(); savePrefs();
+  // مؤثر بصري
+  if(originEl){
+    const rect = originEl.getBoundingClientRect();
+    const x = rect.left + rect.width/2; const y = rect.top + rect.height/2 + window.scrollY;
+    if(n>0) burst(x,y,['⭐','💗','✨','🌟']);
+  }
+  // رسالة روبوت صغيرة
+  if(n>0){
+    $('#coachMsg').textContent = `Great job, Aisha! +${n} points 🎉`;
+  }
+}
+function redeem(cost, name, btn){
+  if(state.points < cost){ btn.textContent='النقاط لا تكفي ❌'; setTimeout(()=> btn.textContent='استبدال',900); return; }
+  state.points -= cost;
+  const log = `${new Date().toLocaleTimeString('ar-SA')} — ${name} (${cost})`;
+  state.history = (state.history? state.history + ' | ' : '') + log;
+  $('#history').textContent = 'سجل المكافآت: ' + state.history;
+  renderScore(); savePrefs();
+  btn.textContent='تم ✅'; setTimeout(()=> btn.textContent='استبدال',1000);
+  // مؤثر كبير
+  const rect = btn.getBoundingClientRect();
+  burst(rect.left+rect.width/2, rect.top+window.scrollY, ['💗','👑','⭐','🌸','✨']);
+}
+
+/* ========= واجهة الروبوت ========= */
+function wave(){
+  const arm=document.getElementById('arm');
+  if(!arm) return;
+  arm.classList.remove('wave'); void arm.offsetWidth; arm.classList.add('wave');
+}
+
+$('#sayHi').addEventListener('click', (e)=>{
+  const msg='Hello Aisha! Let’s practice greetings together.';
+  $('#coachMsg').textContent=msg; say(msg); addPoints(1, e.currentTarget); // تشجيع بسيط
+});
+$('#waveBtn').addEventListener('click', (e)=>{ wave(); addPoints(1, e.currentTarget); });
+$('#muteBtn').addEventListener('click', (e)=>{
+  muted=!muted; e.currentTarget.setAttribute('aria-pressed', String(muted));
+  e.currentTarget.textContent = muted? 'تشغيل الصوت' : 'كتم الصوت';
+  $('#speakState').textContent = muted? 'صامت 🔕' : 'جاهز 🟢';
+});
+$('#sayBtn').addEventListener('click', (e)=>{
+  const t=($('#freeText').value||'').trim();
+  if(!t){ $('#coachMsg').textContent='اكتبي جملة أولًا 📝'; return; }
+  $('#coachMsg').textContent=t; say(t); addPoints(1, e.currentTarget); // نقطة مشاركة
+});
+$('#stopBtn').addEventListener('click', ()=>{ try{synth.cancel();}catch(_){ } $('#speakState').textContent='متوقف ⏹️'; });
+
+$('#langSel').value=state.lang;
+$('#langSel').addEventListener('change', e=>{ state.lang=e.target.value; loadVoices(); savePrefs(); });
+$('#rateInp').value=state.rate;
+$('#pitchInp').value=state.pitch;
+$('#rateInp').addEventListener('input', e=>{ state.rate=parseFloat(e.target.value)||1; savePrefs(); });
+$('#pitchInp').addEventListener('input', e=>{ state.pitch=parseFloat(e.target.value)||1; savePrefs(); });
+$('#voiceSel').addEventListener('change', e=>{ state.voiceURI=e.target.value; savePrefs(); });
+
+/* ========= بطاقات ========= */
+const cardsGrid=$('#cardsGrid');
+const tabGreet=$('#tabGreet'), tabIntro=$('#tabIntro'), tabClass=$('#tabClass');
+const searchInp=$('#searchInp'); const speakMode=$('#speakMode');
+const autoSpeakBtn=$('#autoSpeak');
+
+speakMode.value=state.mode;
+speakMode.addEventListener('change', ()=>{ state.mode=speakMode.value; savePrefs(); renderTab(state.tab); });
+
+autoSpeakBtn.setAttribute('aria-pressed', String(state.autoSpeak));
+autoSpeakBtn.textContent = state.autoSpeak? 'نطق تلقائي: يعمل' : 'نطق تلقائي: متوقف';
+autoSpeakBtn.addEventListener('click',(e)=>{
+  const v=e.currentTarget.getAttribute('aria-pressed')==='true';
+  e.currentTarget.setAttribute('aria-pressed', String(!v));
+  state.autoSpeak=!v; savePrefs();
+  autoSpeakBtn.textContent = state.autoSpeak? 'نطق تلقائي: يعمل' : 'نطق تلقائي: متوقف';
+});
+
+function makeCard(en, ar){
+  const div=document.createElement('div');
+  div.className='card-mini';
+  div.innerHTML=`
+    <div class="en">${escapeHTML(en)}</div>
+    <div class="ar">${escapeHTML(ar)}</div>
+    <div class="row-center">
+      <button class="btn primary">🔊 استمع</button>
+      <button class="btn ghost">نسخ</button>
+    </div>`;
+  const speakBtn=div.querySelector('.btn.primary');
+  const copyBtn =div.querySelector('.btn.ghost');
+  const textFn = ()=> state.mode==='both' ? `${en}. ${ar}` : en;
+
+  speakBtn.addEventListener('click', (e)=>{ say(textFn()); addPoints(1, e.currentTarget); });
+  copyBtn.addEventListener('click', ()=>{
+    navigator.clipboard?.writeText(textFn()).then(()=>{
+      copyBtn.textContent='✅ نُسخ'; setTimeout(()=> copyBtn.textContent='نسخ',900);
+    }).catch(()=>{ copyBtn.textContent='لم ينسخ ❌'; setTimeout(()=> copyBtn.textContent='نسخ',900); });
+  });
+  // نطق سريع عند النقر على البطاقة (غير الأزرار)
+  div.addEventListener('click',(e)=>{ if(e.target.tagName!=='BUTTON') say(textFn()); });
+  return div;
+}
+
+function filterItems(list, q){
+  if(!q) return list;
+  const s=q.toLowerCase();
+  return list.filter(x=> x.en.toLowerCase().includes(s) || x.ar.includes(q));
+}
+
+function renderList(list){
+  const q=(searchInp.value||'').trim();
+  const items=filterItems(list,q);
+  cardsGrid.innerHTML='';
+  items.forEach(({en,ar})=>{
+    const card=makeCard(en,ar);
+    cardsGrid.appendChild(card);
+    if(state.autoSpeak) say(state.mode==='both'? `${en}. ${ar}` : en);
+  });
+  if(!items.length){
+    cardsGrid.innerHTML='<div class="muted">لا نتائج… جرّبي كلمة أخرى.</div>';
+  }
+}
+
+function setTab(tab){
+  state.tab=tab; savePrefs();
+  tabGreet.classList.toggle('active', tab==='greetings');
+  tabIntro.classList.toggle('active', tab==='introductions');
+  tabClass.classList.toggle('active', tab==='classroom');
+  renderTab(tab);
+}
+function renderTab(tab){
+  if(tab==='greetings') renderList(DATA.greetings);
+  else if(tab==='introductions') renderList(DATA.introductions);
+  else renderList(DATA.classroom);
+}
+tabGreet.addEventListener('click', ()=> setTab('greetings'));
+tabIntro.addEventListener('click', ()=> setTab('introductions'));
+tabClass.addEventListener('click', ()=> setTab('classroom'));
+searchInp.addEventListener('input', ()=> renderTab(state.tab));
+$('#clearSearch').addEventListener('click', ()=>{ searchInp.value=''; renderTab(state.tab); });
+
+/* ========= اختبار سريع ========= */
+const quizKey = "Hello, my name is Aisha.";
+$('#quizCheck').addEventListener('click', (e)=>{
+  const ans = ($('#quizAns').value||'').trim();
+  const box = $('#quizMsg'); box.style.display='inline-block';
+  if(ans.toLowerCase()===quizKey.toLowerCase()){
+    box.textContent='Great job, Aisha! 🎉 إجابة صحيحة.'; 
+    box.style.background='#e6ffe6'; box.style.color='#155724';
+    addPoints(3, e.currentTarget); // نقاط إضافية للإجابة الصحيحة
+  }else{
+    box.textContent='جرّبي مرة أخرى 💡 (تلميح: Hello, my name is Aisha.)'; 
+    box.style.background='#fff3cd'; box.style.color='#7a5d00';
+  }
+});
+$('#quizSpeak').addEventListener('click', (e)=>{ say(quizKey); addPoints(1, e.currentTarget); });
+
+/* ========= لوحة المكافآت ========= */
+$('#bonusListen').addEventListener('click', (e)=> addPoints(1, e.currentTarget));
+$('#bonusTry').addEventListener('click', (e)=> addPoints(1, e.currentTarget));
+$('#resetScore').addEventListener('click', ()=>{
+  if(confirm('تأكيد تصفير النقاط؟')){ state.points=0; renderScore(); savePrefs(); }
+});
+document.querySelectorAll('[data-reward]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const [name,costStr]=btn.dataset.reward.split('|'); const cost=Number(costStr||0);
+    const label = name==='star'?'نجمة صغيرة': name==='heart'?'قلب وردي': 'تاج المتفوقة';
+    redeem(cost, label, btn);
+  });
+});
+
+/* ========= تشغيل أولي ========= */
+(function init(){
+  // إعدادات محفوظة
+  $('#langSel').value=state.lang;
+  $('#rateInp').value=state.rate;
+  $('#pitchInp').value=state.pitch;
+  // نقاط/سجل
+  renderScore();
+  $('#history').textContent = 'سجل المكافآت: ' + (state.history||'—');
+  // أول تبويب
+  setTab(state.tab);
+  setTimeout(()=> say('Hello Aisha! Are you ready to learn?'), 600);
+})();
+</script>
+</body>
+</html>
